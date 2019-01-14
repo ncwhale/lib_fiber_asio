@@ -17,9 +17,9 @@ find_package(Boost 1.68 REQUIRED
                         atomic)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-add_library(asio_fibers ${CMAKE_CURRENT_SOURCE_DIR}/src/asio_fibers.cpp)
+add_library(asio_fibers INTERFACE)
 target_include_directories(asio_fibers
-                           PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+                           INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
