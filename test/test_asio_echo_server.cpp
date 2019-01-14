@@ -47,34 +47,30 @@ int main(int argc, char const *argv[])
                           << boost::this_fiber::get_id() << std::endl;
                 std::vector<char> buffer(session_buffer_size);
 
-                try {
-                  while (true) {
+                try
+                {
+                  while (true)
+                  {
                     std::size_t read_size = 0;
-                    auto read_future      = this_socket->async_read_some(
+                    auto read_future = this_socket->async_read_some(
                         boost::asio::buffer(&buffer[0], buffer.size()),
-                        boost::asio::fibers::use_future(
-                            [&read_size](
-                                boost::system::error_code ec,
-                                std::size_t n) -> boost::system::error_code {
-                              read_size = n;
-                              return ec;
-                            }));
+                        boost::asio::fibers::use_future);
 
-                    read_future.get();
+                    read_size = read_future.get(); //Fiber yiled here.
+
                     std::cout << boost::this_fiber::get_id()
-                              << " Read: " << read_size << std::endl;
+                              << "  Read:" << read_size << std::endl;
 
                     auto write_future = boost::asio::async_write(
                         *this_socket,
                         boost::asio::buffer(&buffer[0], read_size),
                         boost::asio::fibers::use_future);
 
-                    write_future.get();
-
-                    std::cout << boost::this_fiber::get_id() << " Write done"
-                              << std::endl;
+                    std::cout << boost::this_fiber::get_id() << " Write:" << write_future.get() << std::endl;
                   }
-                } catch (std::exception const &e) {
+                }
+                catch (std::exception const &e)
+                {
                   std::cout << "Session: " << boost::this_fiber::get_id()
                             << " Error: " << e.what() << std::endl;
                 }
