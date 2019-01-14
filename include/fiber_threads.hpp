@@ -55,7 +55,7 @@ void FiberThreads::init(std::size_t count = 2, bool use_this_thread = true) {
   thread_barrier b(fiber_thread_count);
   auto thread_fun = [&b, this]() {
     boost::fibers::use_scheduling_algorithm<boost::fibers::algo::work_stealing>(
-        fiber_thread_count);
+        fiber_thread_count, true);
     b.wait();
 
     {  // Sync all threads.
@@ -70,7 +70,7 @@ void FiberThreads::init(std::size_t count = 2, bool use_this_thread = true) {
 
   if (use_this_thread) {
     boost::fibers::use_scheduling_algorithm<boost::fibers::algo::work_stealing>(
-        fiber_thread_count);
+        fiber_thread_count, true);
     // sync use_scheduling_algorithm
     b.wait();
   }

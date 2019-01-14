@@ -8,7 +8,7 @@
 #include "use_fiber_future.hpp"
 
 using namespace boost::asio;
-const std::size_t session_buffer_size = 32;
+const std::size_t session_buffer_size = 2048;
 
 int main(int argc, char const *argv[])
 {
@@ -45,39 +45,39 @@ int main(int argc, char const *argv[])
               [this_socket] {
                 std::cout << "Start ECHO Session:"
                           << boost::this_fiber::get_id() << std::endl;
-                // std::vector<char> buffer(session_buffer_size);
+                std::vector<char> buffer(session_buffer_size);
 
-                // try {
-                //   while (true) {
-                //     std::size_t read_size = 0;
-                //     auto read_future      = this_socket->async_read_some(
-                //         boost::asio::buffer(&buffer[0], buffer.size()),
-                //         boost::asio::fibers::use_future(
-                //             [&read_size](
-                //                 boost::system::error_code ec,
-                //                 std::size_t n) -> boost::system::error_code {
-                //               read_size = n;
-                //               return ec;
-                //             }));
+                try {
+                  while (true) {
+                    std::size_t read_size = 0;
+                    auto read_future      = this_socket->async_read_some(
+                        boost::asio::buffer(&buffer[0], buffer.size()),
+                        boost::asio::fibers::use_future(
+                            [&read_size](
+                                boost::system::error_code ec,
+                                std::size_t n) -> boost::system::error_code {
+                              read_size = n;
+                              return ec;
+                            }));
 
-                //     read_future.get();
-                //     std::cout << boost::this_fiber::get_id()
-                //               << " Read: " << read_size << std::endl;
+                    read_future.get();
+                    std::cout << boost::this_fiber::get_id()
+                              << " Read: " << read_size << std::endl;
 
-                //     auto write_future = boost::asio::async_write(
-                //         *this_socket,
-                //         boost::asio::buffer(&buffer[0], read_size),
-                //         boost::asio::fibers::use_future);
+                    auto write_future = boost::asio::async_write(
+                        *this_socket,
+                        boost::asio::buffer(&buffer[0], read_size),
+                        boost::asio::fibers::use_future);
 
-                //     write_future.get();
+                    write_future.get();
 
-                //     std::cout << boost::this_fiber::get_id() << " Write done"
-                //               << std::endl;
-                //   }
-                // } catch (std::exception const &e) {
-                //   std::cout << "Session: " << boost::this_fiber::get_id()
-                //             << " Error: " << e.what() << std::endl;
-                // }
+                    std::cout << boost::this_fiber::get_id() << " Write done"
+                              << std::endl;
+                  }
+                } catch (std::exception const &e) {
+                  std::cout << "Session: " << boost::this_fiber::get_id()
+                            << " Error: " << e.what() << std::endl;
+                }
                 std::cout << "Stop ECHO Session:" << boost::this_fiber::get_id()
                           << std::endl;
                 this_socket->shutdown(socket_base::shutdown_both);
