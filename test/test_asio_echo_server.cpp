@@ -16,12 +16,12 @@ int main(int argc, char const *argv[])
   auto ct = ContextThreads(ctx);
   auto &ft = FiberThreads::instance();
   auto thread_count = std::thread::hardware_concurrency();
-  ft.init(2);
-  // ft.init(thread_count);
+  // Start fiber threads (Default included main thread)
+  ft.init(thread_count);
 
   // Init service here.
-
   boost::fibers::fiber(
+      // Use dispatch to let fibers run asap.
       boost::fibers::launch::dispatch,
       [ctx] {
         std::cout << "Start ECHO TCP Server:" << boost::this_fiber::get_id()
@@ -83,18 +83,13 @@ int main(int argc, char const *argv[])
       })
       .detach();
 
-  // boost::fibers::fiber([] {
-  //   // boost::this_fiber::sleep_for(std::chrono::seconds(2));
-  //   FiberThreads::instance().notify_stop();
-  // })
-  //     .detach();
   // A fake work keep io_context run.
-  typedef boost::asio::executor_work_guard<boost::asio::io_context::executor_type> io_context_work;
-  std::unique_ptr<io_context_work> fake_work(new io_context_work(ctx->get_executor()));
+  std::unique_ptr<context_work> fake_work(new context_work(ctx->get_executor()));
 
   // Start io context thread.
-  ct.start(1);
-  // ct.start(thread_count);
+  ct.start(thread_count);
+
+  // Wait for stop
   ft.join();
   ct.stop();
   return EXIT_SUCCESS;

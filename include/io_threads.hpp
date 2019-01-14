@@ -5,6 +5,7 @@
 #include <vector>
 
 typedef std::shared_ptr<boost::asio::io_context> context_ptr;
+typedef boost::asio::executor_work_guard<boost::asio::io_context::executor_type> context_work;
 
 class ContextThreads
 {
