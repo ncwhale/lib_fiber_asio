@@ -70,7 +70,7 @@ void FiberThreads::init(std::size_t count = 2, bool use_this_thread = true) {
 
   if (use_this_thread) {
     boost::fibers::use_scheduling_algorithm<boost::fibers::algo::work_stealing>(
-        fiber_thread_count, true);
+        fiber_thread_count);
     // sync use_scheduling_algorithm
     b.wait();
   }
@@ -88,6 +88,7 @@ void FiberThreads::join() {
   {
     std::unique_lock<std::mutex> lk(run_mtx);
     m_cnd_stop.wait(lk, [this]() { return !running; });
+    std::cout << "Fibbers not running!" << std::endl;
   }
 
   for (std::thread &t : m_threads) {

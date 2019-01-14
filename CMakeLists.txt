@@ -16,7 +16,7 @@ find_package(Boost 1.68 REQUIRED
                         chrono
                         atomic)
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" "${BOOST_ROOT}")
 add_library(asio_fibers INTERFACE)
 target_include_directories(asio_fibers
                            INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
