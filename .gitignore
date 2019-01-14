@@ -8,7 +8,7 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 
-# Vscode folder
+# VS CODE folder
 .vscode
 # CMake build dirs.
 build
