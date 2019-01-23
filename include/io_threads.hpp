@@ -1,9 +1,13 @@
+#ifndef LIB_ASIO_FIBER_CONTEXT_THREADS
+#define LIB_ASIO_FIBER_CONTEXT_THREADS
+
 #include <boost/asio.hpp>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
 
+namespace asio_fiber {
 typedef std::shared_ptr<boost::asio::io_context> context_ptr;
 typedef boost::asio::executor_work_guard<boost::asio::io_context::executor_type> context_work;
 
@@ -40,3 +44,6 @@ void ContextThreads::stop()
   }
   threads.clear();
 }
+}
+
+#endif // LIB_ASIO_FIBER_CONTEXT_THREADS
