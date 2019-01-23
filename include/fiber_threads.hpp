@@ -7,6 +7,7 @@
 #include <vector>
 #include "thread_barrier.hpp"
 
+namespace asio_fiber {
 class FiberThreads {
  public:
   static FiberThreads &instance();
@@ -95,5 +96,7 @@ void FiberThreads::join() {
     if (t.joinable()) t.join();
   }
 }
+
+} // namespace asio_fiber
 
 #endif  // FIBER_FRAME_CONTEXT_HPP
