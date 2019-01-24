@@ -81,9 +81,9 @@ This library works in this design:
 * the fibers will yield when `future.get` called, and weakup when value fullfill or exception occured.
 * with threads helpers, these fibers & asio threads can be easy managed in main thread.
 
-## Secial Thanks
+## Special Thanks
 
-These articals give me the idead to write this tiny library.
+These articals give me the idea to write this tiny library.
 
 
 * [c++协程库boost.fiber库介绍(zh-CN)](https://zhuanlan.zhihu.com/p/39807017)
