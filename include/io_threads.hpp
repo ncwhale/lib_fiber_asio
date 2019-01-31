@@ -1,3 +1,9 @@
+//
+// io_threads.hpp
+// ~~~~~~~~~~~~~~
+//
+// Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
+//
 #ifndef LIB_ASIO_FIBER_CONTEXT_THREADS
 #define LIB_ASIO_FIBER_CONTEXT_THREADS
 
