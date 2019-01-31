@@ -2,9 +2,23 @@
 
 A tiny library &amp; examples for join boost::fiber&amp;boost::asio toghter.
 
+## Design
+
+This library works in this design:
+
+* boost::asio runs in some threads;
+* boost::fibers runs in other threads (May include the main thread);
+* use `boost::asio::fibers::use_future` for every asio async call placeholder.
+* the fibers will yield when `future.get` called, and weakup when value fullfill or exception occured.
+* with threads helpers, these fibers & asio threads can be easy managed in main thread.
+
 ## How to use?
 
-This example convert from asio use_future.
+1. Use `boost::asio::fibers::use_future` as placeholders when call asio async functions.
+2. Call the returned `future.get()` when need to wait the async call done.
+3. Fiber will yield until the async call done or exception throws.
+
+This example convert from `asio::use_future`.
 
 ```CPP
 void get_daytime(boost::asio::io_context& io_context, const char* hostname)
@@ -70,16 +84,6 @@ int main() {
     ...
 }
 ```
-
-## Design
-
-This library works in this design:
-
-* boost::asio runs in some threads;
-* boost::fibers runs in other threads (May include the main thread);
-* use `boost::asio::fibers::use_future` for every asio async call placeholder.
-* the fibers will yield when `future.get` called, and weakup when value fullfill or exception occured.
-* with threads helpers, these fibers & asio threads can be easy managed in main thread.
 
 ## Special Thanks
 
