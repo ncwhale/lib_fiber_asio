@@ -1,3 +1,9 @@
+//
+// io_threads.cpp
+// ~~~~~~~~~~~~~~
+//
+// Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
+//
 #include "io_threads.hpp"
 
 namespace asio_fiber {

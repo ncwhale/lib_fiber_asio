@@ -1,6 +1,6 @@
 //
 // use_fiber_future.hpp
-// ~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~
 //
 // Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)

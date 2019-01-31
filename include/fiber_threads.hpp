@@ -1,6 +1,6 @@
 //
 // fiber_threads.hpp
-// ~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~
 //
 // Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
 //
