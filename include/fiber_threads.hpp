@@ -129,7 +129,8 @@ void FiberThreads<fiber_scheduling_algorithm>::join() {
   {
     std::unique_lock<std::mutex> lk(run_mtx);
     m_cnd_stop.wait(lk, [this]() { return !running; });
-    std::cout << "Fibbers not running!" << std::endl;
+    // TODO: Use logger for these output control.
+    // std::cout << "Fibbers not running!" << std::endl;
   }
 
   for (std::thread &t : m_threads) {
