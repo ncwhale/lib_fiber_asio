@@ -108,7 +108,7 @@ void FiberThreads<fiber_scheduling_algorithm>::init(
   }
 
   if (use_this_thread) {
-    boost::fibers::use_scheduling_algorithm<boost::fibers::algo::work_stealing>(
+    install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
         fiber_thread_count, suspend_worker_thread);
     // sync with worker threads.
     b.wait();
