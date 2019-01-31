@@ -8,12 +8,7 @@ void ContextThreads::start(std::size_t thread_count = 1) {
   ctx->restart();
   for (std::size_t i = 0; i < thread_count; ++i) {
     threads.push_back(std::thread([this] {
-      // auto count =
       ctx->run();
-      // TODO: Use logger for these output.
-      // std::cout << "IO Thread RUN " << count
-      //           << " Times, Exit: " << std::this_thread::get_id() <<
-      //           std::endl;
     }));
   }
 }
