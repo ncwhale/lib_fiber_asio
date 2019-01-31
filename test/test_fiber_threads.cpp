@@ -3,6 +3,8 @@
 #include <sstream>
 #include "fiber_threads.hpp"
 
+using namespace asio_fiber;
+
 static std::size_t fiber_count{0};
 static boost::fibers::mutex mtx_count{};
 static boost::fibers::condition_variable_any cnd_count{};
@@ -42,7 +44,7 @@ void whatevah(char me) {
 }
 
 int main(int argc, char const *argv[]) {
-  auto &ft          = FiberThreads::instance();
+  auto &ft          = FiberThreads<>::instance();
   auto thread_count = std::thread::hardware_concurrency();
   ft.init(thread_count);
 
@@ -57,7 +59,7 @@ int main(int argc, char const *argv[]) {
       cnd_count.wait(lk, []() { return 0 == fiber_count; });
     }
 
-    FiberThreads::instance().notify_stop();
+    FiberThreads<>::instance().notify_stop();
   })
       .detach();
 

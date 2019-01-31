@@ -7,6 +7,7 @@
 #include "use_fiber_future.hpp"
 
 using namespace boost::asio;
+using namespace asio_fiber;
 static std::size_t fiber_count{100};
 static boost::fibers::mutex mtx_count{};
 static boost::fibers::condition_variable_any cnd_count{};
@@ -15,7 +16,7 @@ typedef std::unique_lock<boost::fibers::mutex> lock_type;
 int main(int argc, char const *argv[]) {
   context_ptr ctx   = std::make_shared<boost::asio::io_context>();
   auto ct           = ContextThreads(ctx);
-  auto &ft          = FiberThreads::instance();
+  auto &ft          = FiberThreads<>::instance();
   auto thread_count = std::thread::hardware_concurrency();
   ft.init(thread_count);
 
@@ -60,7 +61,7 @@ int main(int argc, char const *argv[]) {
       lock_type lk(mtx_count);
       cnd_count.wait(lk, []() { return 0 == fiber_count; });
     }
-    FiberThreads::instance().notify_stop();
+    FiberThreads<>::instance().notify_stop();
   })
       .detach();
 
