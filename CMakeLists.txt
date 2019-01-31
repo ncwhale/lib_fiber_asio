@@ -26,14 +26,14 @@ if(Boost_FOUND)
   include(CPack)
 
   add_executable(test_fiber_threads ./test/test_fiber_threads.cpp)
-  target_link_libraries(test_fiber_threads ${Boost_LIBRARIES} pthread rt)
+  target_link_libraries(test_fiber_threads asio_fibers ${Boost_LIBRARIES} pthread rt)
 
   add_executable(test_asio_timer ./test/test_asio_timer.cpp)
-  target_link_libraries(test_asio_timer ${Boost_LIBRARIES} pthread rt)
+  target_link_libraries(test_asio_timer asio_fibers ${Boost_LIBRARIES} pthread rt)
 
   add_executable(test_af_timer ./test/test_fiber_asio_timer.cpp)
-  target_link_libraries(test_af_timer ${Boost_LIBRARIES} pthread rt)
+  target_link_libraries(test_af_timer asio_fibers ${Boost_LIBRARIES} pthread rt)
 
   add_executable(test_echo_server ./test/test_asio_echo_server.cpp)
-  target_link_libraries(test_echo_server ${Boost_LIBRARIES} pthread rt)
+  target_link_libraries(test_echo_server asio_fibers ${Boost_LIBRARIES} pthread rt)
 endif()
