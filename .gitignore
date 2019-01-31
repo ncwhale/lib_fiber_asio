@@ -7,3 +7,10 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+
+# VS CODE folder
+.vscode
+# CMake build dirs.
+build
+# CMake tools local config file.
+cmake-variants.yaml
