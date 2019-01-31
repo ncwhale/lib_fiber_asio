@@ -1,98 +1,79 @@
 //
-// daytime_client.cpp
-// ~~~~~~~~~~~~~~~~~~
+// test_asio_timer.cpp
+// ~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
 //
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
+#include <boost/asio.hpp>
+#include <chrono>
+#include <memory>
+#include <thread>  // for std::thread::hardware_concurrency()
+#include "fiber_threads.hpp"
+#include "io_threads.hpp"
+#include "use_fiber_future.hpp"
 
-#include <array>
-#include <future>
-#include <iostream>
-#include <thread>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/udp.hpp>
-#include <boost/asio/use_future.hpp>
+using namespace boost::asio;
+using namespace asio_fiber;
+static std::size_t fiber_count{100};
+static boost::fibers::mutex mtx_count{};
+static boost::fibers::condition_variable_any cnd_count{};
+typedef std::unique_lock<boost::fibers::mutex> lock_type;
 
-using boost::asio::ip::udp;
+int main(int argc, char const *argv[]) {
+  context_ptr ctx   = std::make_shared<boost::asio::io_context>();
+  auto ct           = ContextThreads(ctx);
+  auto &ft          = FiberThreads<>::instance();
+  auto thread_count = std::thread::hardware_concurrency();
+  ft.init(thread_count);
 
-void get_daytime(boost::asio::io_context& io_context, const char* hostname)
-{
-  try
+  // Init service here.
   {
-    udp::resolver resolver(io_context);
+    // lock_type lk(mtx_count);
 
-    std::future<udp::resolver::results_type> endpoints =
-      resolver.async_resolve(
-          udp::v4(), hostname, "daytime",
-          boost::asio::use_future);
+    for (int i = 0; i < fiber_count; ++i) {
+      boost::fibers::fiber(
+          boost::fibers::launch::dispatch,
+          [ctx, &ct, thread_count] {
+            auto thread_id = std::this_thread::get_id();
+            std::cout << "Start timer:" << boost::this_fiber::get_id() << "@"
+                      << thread_id << std::endl;
+            auto timer = steady_timer(*ctx);
+            timer.expires_after(chrono::seconds(1));
+            auto future = timer.async_wait(boost::asio::fibers::use_future);
+            // Must sync with main thread here.
+            future.get();
 
-    // The async_resolve operation above returns the endpoints as a future
-    // value that is not retrieved ...
-
-    udp::socket socket(io_context, udp::v4());
-
-    std::array<char, 1> send_buf  = {{ 0 }};
-    std::future<std::size_t> send_length =
-      socket.async_send_to(boost::asio::buffer(send_buf),
-          *endpoints.get().begin(), // ... until here. This call may block.
-          boost::asio::use_future);
-
-    std::cout << "Endpoint get" << std::endl;
-
-    // Do other things here while the send completes.
-
-    std::cout << "Sended: " <<
-    send_length.get() // Blocks until the send is complete. Throws any errors.
-     << std::endl;
-
-    std::array<char, 128> recv_buf;
-    udp::endpoint sender_endpoint;
-    std::future<std::size_t> recv_length =
-      socket.async_receive_from(
-          boost::asio::buffer(recv_buf),
-          sender_endpoint,
-          boost::asio::use_future);
-
-    // Do other things here while the receive completes.
-
-    std::cout.write(
-        recv_buf.data(),
-        recv_length.get()); // Blocks until receive is complete.
-  }
-  catch (std::system_error& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-}
-
-int main(int argc, char* argv[])
-{
-  try
-  {
-    if (argc != 2)
-    {
-      std::cerr << "Usage: daytime_client <host>" << std::endl;
-      return 1;
+            {
+              lock_type lk(mtx_count);
+              if (thread_id != std::this_thread::get_id())
+                std::cout << "Fiber moved:" << boost::this_fiber::get_id()
+                          << "@" << std::this_thread::get_id() << std::endl;
+              if (0 == --fiber_count) { /*< Decrement fiber counter for each
+                                           completed fiber. >*/
+                lk.unlock();
+                cnd_count.notify_all(); /*< Notify all fibers waiting on
+                                           `cnd_count`. >*/
+              }
+            }
+          })
+          .detach();
     }
-
-    // We run the io_context off in its own thread so that it operates
-    // completely asynchronously with respect to the rest of the program.
-    boost::asio::io_context io_context;
-    auto work = boost::asio::make_work_guard(io_context);
-    std::thread thread([&io_context](){ io_context.run(); });
-
-    get_daytime(io_context, argv[1]);
-
-    io_context.stop();
-    thread.join();
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
   }
 
-  return 0;
+  boost::fibers::fiber([] {
+    // boost::this_fiber::sleep_for(std::chrono::seconds(2));
+    boost::this_fiber::yield();
+    {
+      lock_type lk(mtx_count);
+      cnd_count.wait(lk, []() { return 0 == fiber_count; });
+    }
+    FiberThreads<>::instance().notify_stop();
+  })
+      .detach();
+
+  // Start io context thread.
+  ct.start(thread_count);
+  ft.join();
+  ct.stop();
+  return EXIT_SUCCESS;
 }

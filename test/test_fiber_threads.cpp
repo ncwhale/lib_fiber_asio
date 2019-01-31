@@ -1,3 +1,9 @@
+//
+// test_fiber_threads.cpp
+// ~~~~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
+//
 #include <boost/fiber/all.hpp>
 #include <chrono>
 #include <sstream>

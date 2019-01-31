@@ -1,3 +1,9 @@
+//
+// test_echo_server.cpp
+// ~~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
+//
 #include <boost/asio.hpp>
 #include <chrono>
 #include <memory>
