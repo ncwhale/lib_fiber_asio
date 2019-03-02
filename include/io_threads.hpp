@@ -4,8 +4,9 @@
 //
 // Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
 //
-#ifndef LIB_ASIO_FIBER_CONTEXT_THREADS
-#define LIB_ASIO_FIBER_CONTEXT_THREADS
+
+#ifndef ASIO_FIBER_IO_THREADS
+#define ASIO_FIBER_IO_THREADS
 
 #include <boost/asio.hpp>
 #include <memory>
@@ -14,9 +15,10 @@
 #include <vector>
 
 namespace asio_fiber {
+
 typedef std::shared_ptr<boost::asio::io_context> context_ptr;
-typedef boost::asio::executor_work_guard<boost::asio::io_context::executor_type>
-    context_work;
+typedef boost::asio::executor_work_guard<boost::asio::io_context::executor_type> context_work;
+typedef std::unique_ptr<context_work> fake_work_ptr;
 
 class ContextThreads {
  public:
@@ -27,10 +29,11 @@ class ContextThreads {
 
  private:
   context_ptr ctx;
-  context_work fake_work;
+  // A fake work will keep io_context run.
+  fake_work_ptr fake_work;
   std::vector<std::thread> threads;
 };
 
 }  // namespace asio_fiber
 
-#endif  // LIB_ASIO_FIBER_CONTEXT_THREADS
+#endif  // ASIO_FIBER_IO_THREADS

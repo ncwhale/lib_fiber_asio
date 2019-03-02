@@ -4,8 +4,8 @@
 //
 // Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
 //
-#ifndef FIBER_FRAME_CONTEXT_HPP
-#define FIBER_FRAME_CONTEXT_HPP
+#ifndef ASIO_FIBER_THREAD_HPP
+#define ASIO_FIBER_THREAD_HPP
 
 #include <boost/fiber/all.hpp>
 #include <mutex>
@@ -109,7 +109,7 @@ void FiberThreads<fiber_scheduling_algorithm>::init(
     }
   };
 
-  for (int i = (use_this_thread ? 1 : 0); i < fiber_thread_count; ++i) {
+  for (std::size_t i = (use_this_thread ? 1 : 0); i < fiber_thread_count; ++i) {
     m_threads.push_back(std::thread(thread_fun));
   }
 
@@ -144,4 +144,4 @@ void FiberThreads<fiber_scheduling_algorithm>::join() {
 
 }  // namespace asio_fiber
 
-#endif  // FIBER_FRAME_CONTEXT_HPP
+#endif  // ASIO_FIBER_THREAD_HPP
