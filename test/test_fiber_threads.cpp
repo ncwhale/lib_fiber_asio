@@ -26,7 +26,7 @@ void whatevah(char me) {
       std::cout << buffer.str() << std::flush;
     }
     // boost::this_fiber::sleep_for(std::chrono::microseconds(1));
-    for (unsigned i = 0; i < 100; ++i) { /*< loop ten times >*/
+    for (unsigned i = 0; i < 100; ++i) { /*< loop 100 times >*/
       boost::this_fiber::yield();        /*< yield to other fibers >*/
       std::thread::id new_thread =
           std::this_thread::get_id(); /*< get ID of current thread >*/
