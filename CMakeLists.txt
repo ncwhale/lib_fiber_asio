@@ -8,9 +8,7 @@ find_package(Boost 1.68 REQUIRED
              COMPONENTS system
                         fiber
                         date_time
-                        regex
-                        context
-                        atomic)
+                        context)
 
 if(Boost_FOUND)
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include"
