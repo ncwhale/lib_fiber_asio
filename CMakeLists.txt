@@ -4,6 +4,7 @@ project(asio_fibers VERSION 1.0.0)
 include(CTest)
 enable_testing()
 
+set(Boost_DEBUG OFF)
 find_package(Boost 1.68 REQUIRED
              COMPONENTS system
                         fiber
