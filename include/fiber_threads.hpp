@@ -9,9 +9,11 @@
 
 #include <boost/fiber/all.hpp>
 #include <mutex>
+#include <sstream>
 #include <thread>
 #include <vector>
 #include "thread_barrier.hpp"
+#include "thread_name.hpp"
 
 namespace asio_fiber {
 
@@ -96,24 +98,28 @@ void FiberThreads<fiber_scheduling_algorithm>::init(
   }
 
   thread_barrier b(fiber_thread_count);
-  auto thread_fun = [&b, this, suspend_worker_thread]() {
-    install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
-        fiber_thread_count, suspend_worker_thread);
-
-    // Sync all threads.
-    b.wait();
-
-    {  // Wait for fibers run.
-      std::unique_lock<std::mutex> lk(run_mtx);
-      m_cnd_stop.wait(lk, [this]() { return !running; });
-    }
-  };
-
   for (std::size_t i = (use_this_thread ? 1 : 0); i < fiber_thread_count; ++i) {
-    m_threads.push_back(std::thread(thread_fun));
+    m_threads.push_back(std::thread([&b, i, this, suspend_worker_thread]() {
+      {
+        std::ostringstream oss;
+        oss << "Fiber-Thread-" << i;
+        this_thread_name::set(oss.str());
+      }
+      install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
+          fiber_thread_count, suspend_worker_thread);
+
+      // Sync all threads.
+      b.wait();
+
+      {  // Wait for fibers run.
+        std::unique_lock<std::mutex> lk(run_mtx);
+        m_cnd_stop.wait(lk, [this]() { return !running; });
+      }
+    }));
   }
 
   if (use_this_thread) {
+    this_thread_name::set(std::string("Fiber-Thread-Main"));
     install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
         fiber_thread_count, suspend_worker_thread);
     // sync with worker threads.
