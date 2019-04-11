@@ -4,8 +4,8 @@
 #include <string>
 
 namespace this_thread_name {
-  void set(const std::string& name);
-  const std::string& get();
-}
+void set(const std::string& name);
+const std::string& get();
+}  // namespace this_thread_name
 
-#endif //THREAD_NAME_HPP
+#endif  // THREAD_NAME_HPP
