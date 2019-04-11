@@ -84,13 +84,12 @@ int main(int argc, char const *argv[]) {
   ft.join();
   auto end_point = std::chrono::steady_clock::now();
   {  // Output process timing.
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        end_point - start_point);
+    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+    //     end_point - start_point);
     std::chrono::duration<double, std::milli> d_duration =
         end_point - start_point;
     std::ostringstream oss;
-    oss << "Jobs done in " << duration.count() << "ms.\n";
-    oss << "or " << d_duration.count() << "ms.";
+    oss << "Jobs done in " << d_duration.count() << "ms.\n";
     std::cout << oss.str() << std::endl;
   }
   return EXIT_SUCCESS;
