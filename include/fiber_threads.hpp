@@ -98,13 +98,15 @@ void FiberThreads<fiber_scheduling_algorithm>::init(
   }
 
   thread_barrier b(fiber_thread_count);
+
   for (std::size_t i = (use_this_thread ? 1 : 0); i < fiber_thread_count; ++i) {
-    m_threads.push_back(std::thread([&b, i, this, suspend_worker_thread]() {
+    m_threads.push_back(std::thread([&b, i, this, suspend_worker_thread] {
       {
         std::ostringstream oss;
         oss << "Fiber-Thread-" << i;
         this_thread_name::set(oss.str());
       }
+      
       install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
           fiber_thread_count, suspend_worker_thread);
 
@@ -119,7 +121,6 @@ void FiberThreads<fiber_scheduling_algorithm>::init(
   }
 
   if (use_this_thread) {
-    this_thread_name::set(std::string("Fiber-Thread-Main"));
     install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
         fiber_thread_count, suspend_worker_thread);
     // sync with worker threads.
