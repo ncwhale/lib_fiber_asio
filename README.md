@@ -12,7 +12,11 @@ This library works in this design:
 * the fibers will yield when `future.get` called, and weakup when value fullfill or exception occured.
 * with threads helpers, these fibers & asio threads can be easy managed in main thread.
 
-## How to use?
+## Update
+
+* Support Boost 1.70.0 now!
+
+## How to use
 
 1. Use `boost::asio::fibers::use_future` as placeholders when call asio async functions.
 2. Call the returned `future.get()` when need to wait the async call done.
@@ -89,10 +93,6 @@ int main() {
 
 These articals give me the idea to write this tiny library.
 
-
 * [c++协程库boost.fiber库介绍(zh-CN)](https://zhuanlan.zhihu.com/p/39807017)
-
 * [c++协程库boost.fiber的能力(zh-CN)](https://zhuanlan.zhihu.com/p/45665910)
-
 * [fiber_kit](https://github.com/jxfwinter/fiber_kit)
-

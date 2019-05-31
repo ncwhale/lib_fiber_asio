@@ -4,19 +4,19 @@ project(asio_fibers VERSION 1.0.0)
 include(CTest)
 enable_testing()
 
-find_package(Boost 1.68 REQUIRED
+set(Boost_DEBUG OFF)
+find_package(Boost 1.70 REQUIRED
              COMPONENTS system
                         fiber
+                        log
                         date_time
-                        regex
-                        context
-                        atomic)
+                        context)
 
 if(Boost_FOUND)
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include"
                       "${Boost_INCLUDE_DIRS}")
 
-  add_library(asio_fibers STATIC "src/io_threads.cpp")
+  add_library(asio_fibers STATIC "src/io_threads.cpp" "src/thread_name.cpp")
 
   target_include_directories(asio_fibers
                              PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -26,11 +26,23 @@ if(Boost_FOUND)
   include(CPack)
 
   add_executable(test_fiber_threads ./test/test_fiber_threads.cpp)
-  target_link_libraries(test_fiber_threads asio_fibers ${Boost_LIBRARIES} pthread rt)
+  target_link_libraries(test_fiber_threads
+                        asio_fibers
+                        ${Boost_LIBRARIES}
+                        pthread
+                        rt)
 
   add_executable(test_asio_timer ./test/test_asio_timer.cpp)
-  target_link_libraries(test_asio_timer asio_fibers ${Boost_LIBRARIES} pthread rt)
+  target_link_libraries(test_asio_timer
+                        asio_fibers
+                        ${Boost_LIBRARIES}
+                        pthread
+                        rt)
 
   add_executable(test_echo_server ./test/test_echo_server.cpp)
-  target_link_libraries(test_echo_server asio_fibers ${Boost_LIBRARIES} pthread rt)
+  target_link_libraries(test_echo_server
+                        asio_fibers
+                        ${Boost_LIBRARIES}
+                        pthread
+                        rt)
 endif()

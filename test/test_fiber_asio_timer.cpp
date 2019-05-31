@@ -1,10 +1,3 @@
-//
-// test_asio_timer.cpp
-// ~~~~~~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
-//
-
 #include <boost/asio.hpp>
 #include <chrono>
 #include <memory>
@@ -15,6 +8,7 @@
 
 using namespace boost::asio;
 using namespace asio_fiber;
+
 static std::size_t fiber_count{100};
 static boost::fibers::mutex mtx_count{};
 static boost::fibers::condition_variable_any cnd_count{};
@@ -28,7 +22,10 @@ int main(int argc, char const *argv[]) {
   ft.init(thread_count);
 
   // Init service here.
-  for (int i = 0; i < fiber_count; ++i) {
+  {
+    // lock_type lk(mtx_count);
+
+    for (int i = 0; i < fiber_count; ++i) {
       boost::fibers::fiber(
           boost::fibers::launch::dispatch,
           [ctx, &ct, thread_count] {
@@ -55,6 +52,7 @@ int main(int argc, char const *argv[]) {
             }
           })
           .detach();
+    }
   }
 
   boost::fibers::fiber([] {
