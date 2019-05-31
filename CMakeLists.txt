@@ -5,9 +5,10 @@ include(CTest)
 enable_testing()
 
 set(Boost_DEBUG OFF)
-find_package(Boost 1.68 REQUIRED
+find_package(Boost 1.70 REQUIRED
              COMPONENTS system
                         fiber
+                        log
                         date_time
                         context)
 
