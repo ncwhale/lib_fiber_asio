@@ -4,7 +4,10 @@
 //
 // Copyright (c) 2003-2019 Whale Mo (ncwhale at gmail dot com)
 //
+// Need define this to use boost::log.
+#define BOOST_LOG_DYN_LINK 1
 #include <boost/asio.hpp>
+#include <boost/log/trivial.hpp>
 #include <chrono>
 #include <memory>
 #include <thread>  // for std::thread::hardware_concurrency()
@@ -35,8 +38,7 @@ int main(int argc, char const *argv[]) {
       // Use dispatch to let fibers run asap.
       boost::fibers::launch::dispatch,
       [ctx] {
-        std::cout << "Start ECHO TCP Server:" << boost::this_fiber::get_id()
-                  << std::endl;
+        std::cout << "Start ECHO TCP Server:" << boost::this_fiber::get_id();
 
         ip::tcp::acceptor acceptor(*ctx,
                                    ip::tcp::endpoint(ip::tcp::v4(), 10495));
@@ -52,8 +54,8 @@ int main(int argc, char const *argv[]) {
           boost::fibers::fiber(
               boost::fibers::launch::dispatch,
               [this_socket] {
-                std::cout << "Start ECHO Session:"
-                          << boost::this_fiber::get_id() << std::endl;
+                BOOST_LOG_TRIVIAL(info)
+                    << "Start ECHO Session:" << boost::this_fiber::get_id();
                 std::vector<char> buffer(session_buffer_size);
 
                 try {
@@ -64,30 +66,32 @@ int main(int argc, char const *argv[]) {
 
                     auto read_size = read_future.get();  // Fiber yiled here.
 
-                    std::cout << boost::this_fiber::get_id()
-                              << "  Read:" << read_size << std::endl;
+                    BOOST_LOG_TRIVIAL(debug) << boost::this_fiber::get_id()
+                                             << "  Read:" << read_size;
 
                     auto write_future = boost::asio::async_write(
                         *this_socket,
                         boost::asio::buffer(&buffer[0], read_size),
                         boost::asio::fibers::use_future);
 
-                    std::cout << boost::this_fiber::get_id()
-                              << " Write:" << write_future.get()
-                              << std::endl;  // Fiber yiled here.
+                    BOOST_LOG_TRIVIAL(debug)
+                        << boost::this_fiber::get_id() << " Write:"
+                        << write_future.get();  // Fiber yiled here.
                   }
                 } catch (std::exception const &e) {
-                  std::cout << "Session: " << boost::this_fiber::get_id()
-                            << " Error: " << e.what() << std::endl;
+                  BOOST_LOG_TRIVIAL(warning)
+                      << "Session: " << boost::this_fiber::get_id()
+                      << " Error: " << e.what();
                 }
-                std::cout << "Stop ECHO Session:" << boost::this_fiber::get_id()
-                          << std::endl;
+
+                BOOST_LOG_TRIVIAL(info)
+                    << "Stop ECHO Session:" << boost::this_fiber::get_id();
                 this_socket->shutdown(socket_base::shutdown_both);
               })
-              .detach(); // Don't forget to detach fibers or it will stop run.
+              .detach();  // Don't forget to detach fibers or it will stop run.
         }
       })
-      .detach(); 
+      .detach();
 
   // Wait for stop
   ft.join();
