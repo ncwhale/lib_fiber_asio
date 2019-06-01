@@ -8,6 +8,7 @@
 #define ASIO_FIBER_THREAD_HPP
 
 #include <boost/fiber/all.hpp>
+#include <functional>
 #include <mutex>
 #include <sstream>
 #include <thread>
@@ -17,8 +18,11 @@
 
 namespace asio_fiber {
 
+typedef std::function<void()> task_type;
+
 template <typename fiber_scheduling_algorithm =
-              boost::fibers::algo::shared_work>
+              boost::fibers::algo::shared_work,
+          std::size_t fiber_task_channel_size = 128>
 class FiberThreads {
  public:
   static FiberThreads &instance();
@@ -26,11 +30,14 @@ class FiberThreads {
   void init(std::size_t count = 2, bool use_this_thread = true,
             bool suspend_worker_thread = true);
 
+  void post(task_type);
+
   void notify_stop();
 
   void join();
 
  private:
+  // FiberThreads() : task_channel(fiber_task_channel_size){};
   FiberThreads() = default;
   FiberThreads(const FiberThreads &rhs) = delete;
   FiberThreads(FiberThreads &&rhs) = delete;
@@ -43,6 +50,8 @@ class FiberThreads {
   std::mutex run_mtx;
   boost::fibers::condition_variable_any m_cnd_stop;
   std::vector<std::thread> m_threads;
+  // boost::fibers::buffered_channel<task_type> task_channel;
+  boost::fibers::unbuffered_channel<task_type> task_channel;
 };
 
 template <typename fiber_scheduling_algorithm>
@@ -66,15 +75,17 @@ void install_fiber_scheduling_algorithm<boost::fibers::algo::work_stealing>(
       thread_count, suspend);
 }
 
-template <typename fiber_scheduling_algorithm>
-FiberThreads<fiber_scheduling_algorithm>
-    &FiberThreads<fiber_scheduling_algorithm>::instance() {
-  static FiberThreads<fiber_scheduling_algorithm> ft;
+template <typename fiber_scheduling_algorithm,
+          std::size_t fiber_task_channel_size>
+FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size> &
+FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::instance() {
+  static FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size> ft;
   return ft;
 }
 
-template <typename fiber_scheduling_algorithm>
-void FiberThreads<fiber_scheduling_algorithm>::init(
+template <typename fiber_scheduling_algorithm,
+          std::size_t fiber_task_channel_size>
+void FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::init(
     std::size_t count, bool use_this_thread, bool suspend_worker_thread) {
   // Check param for init.
   if (!use_this_thread and count < 1) {
@@ -89,35 +100,58 @@ void FiberThreads<fiber_scheduling_algorithm>::init(
     fiber_thread_count = count;
   }
 
+  // This will start a work post fiber on every thread.
+  auto install_task_post_fiber = [this] {
+    auto worker_fiber = boost::fibers::fiber([this] {
+      task_type task;
+      // dequeue & process tasks.
+      while (boost::fibers::channel_op_status::closed !=
+             task_channel.pop(task)) {
+        task();
+      }
+    });
+
+    // auto context = worker_fiber.properties();
+    worker_fiber.detach();
+  };
+
   // At least we need 2 threads for other fiber algo.
   if (use_this_thread && fiber_thread_count < 2) {
     // Use round_robin for this (main) thread only.
     install_fiber_scheduling_algorithm<boost::fibers::algo::round_robin>(
         fiber_thread_count, suspend_worker_thread);
+
+    // Install task post fiber.
+    install_task_post_fiber();
+
     return;
   }
 
   thread_barrier b(fiber_thread_count);
 
   for (std::size_t i = (use_this_thread ? 1 : 0); i < fiber_thread_count; ++i) {
-    m_threads.push_back(std::thread([&b, i, this, suspend_worker_thread] {
-      {
-        std::ostringstream oss;
-        oss << "Fiber-Thread-" << i;
-        this_thread_name::set(oss.str());
-      }
-      
-      install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
-          fiber_thread_count, suspend_worker_thread);
+    m_threads.push_back(std::thread(
+        [&b, i, this, suspend_worker_thread, &install_task_post_fiber] {
+          {
+            std::ostringstream oss;
+            oss << "Fiber-Thread-" << i;
+            this_thread_name::set(oss.str());
+          }
 
-      // Sync all threads.
-      b.wait();
+          install_fiber_scheduling_algorithm<fiber_scheduling_algorithm>(
+              fiber_thread_count, suspend_worker_thread);
 
-      {  // Wait for fibers run.
-        std::unique_lock<std::mutex> lk(run_mtx);
-        m_cnd_stop.wait(lk, [this]() { return !running; });
-      }
-    }));
+          // Sync all threads.
+          b.wait();
+
+          // Install task post fiber.
+          install_task_post_fiber();
+
+          {  // Wait for fibers run.
+            std::unique_lock<std::mutex> lk(run_mtx);
+            m_cnd_stop.wait(lk, [this]() { return !running; });
+          }
+        }));
   }
 
   if (use_this_thread) {
@@ -125,19 +159,32 @@ void FiberThreads<fiber_scheduling_algorithm>::init(
         fiber_thread_count, suspend_worker_thread);
     // sync with worker threads.
     b.wait();
+
+    // Install task post fiber.
+    install_task_post_fiber();
   }
 }
 
-template <typename fiber_scheduling_algorithm>
-void FiberThreads<fiber_scheduling_algorithm>::notify_stop() {
+template <typename fiber_scheduling_algorithm,
+          std::size_t fiber_task_channel_size>
+void FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::post(
+    task_type task) {
+  task_channel.push(task);
+}
+
+template <typename fiber_scheduling_algorithm,
+          std::size_t fiber_task_channel_size>
+void FiberThreads<fiber_scheduling_algorithm,
+                  fiber_task_channel_size>::notify_stop() {
   std::unique_lock<std::mutex> lk(run_mtx);
   running = false;
   lk.unlock();
   m_cnd_stop.notify_all();
 }
 
-template <typename fiber_scheduling_algorithm>
-void FiberThreads<fiber_scheduling_algorithm>::join() {
+template <typename fiber_scheduling_algorithm,
+          std::size_t fiber_task_channel_size>
+void FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::join() {
   //检查结束条件
   {
     std::unique_lock<std::mutex> lk(run_mtx);
