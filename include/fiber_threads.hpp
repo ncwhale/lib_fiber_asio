@@ -22,7 +22,7 @@ typedef std::function<void()> task_type;
 
 template <typename fiber_scheduling_algorithm =
               boost::fibers::algo::shared_work,
-          std::size_t fiber_task_channel_size = 128>
+          std::size_t fiber_group_id = 128>
 class FiberThreads {
  public:
   static FiberThreads &instance();
@@ -37,7 +37,6 @@ class FiberThreads {
   void join();
 
  private:
-  // FiberThreads() : task_channel(fiber_task_channel_size){};
   FiberThreads() = default;
   FiberThreads(const FiberThreads &rhs) = delete;
   FiberThreads(FiberThreads &&rhs) = delete;
@@ -50,7 +49,6 @@ class FiberThreads {
   std::mutex run_mtx;
   boost::fibers::condition_variable_any m_cnd_stop;
   std::vector<std::thread> m_threads;
-  // boost::fibers::buffered_channel<task_type> task_channel;
   boost::fibers::unbuffered_channel<task_type> task_channel;
 };
 
@@ -76,16 +74,16 @@ void install_fiber_scheduling_algorithm<boost::fibers::algo::work_stealing>(
 }
 
 template <typename fiber_scheduling_algorithm,
-          std::size_t fiber_task_channel_size>
-FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size> &
-FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::instance() {
-  static FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size> ft;
+          std::size_t fiber_group_id>
+FiberThreads<fiber_scheduling_algorithm, fiber_group_id> &
+FiberThreads<fiber_scheduling_algorithm, fiber_group_id>::instance() {
+  static FiberThreads<fiber_scheduling_algorithm, fiber_group_id> ft;
   return ft;
 }
 
 template <typename fiber_scheduling_algorithm,
-          std::size_t fiber_task_channel_size>
-void FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::init(
+          std::size_t fiber_group_id>
+void FiberThreads<fiber_scheduling_algorithm, fiber_group_id>::init(
     std::size_t count, bool use_this_thread, bool suspend_worker_thread) {
   // Check param for init.
   if (!use_this_thread and count < 1) {
@@ -166,16 +164,16 @@ void FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::init(
 }
 
 template <typename fiber_scheduling_algorithm,
-          std::size_t fiber_task_channel_size>
-void FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::post(
+          std::size_t fiber_group_id>
+void FiberThreads<fiber_scheduling_algorithm, fiber_group_id>::post(
     task_type task) {
   task_channel.push(task);
 }
 
 template <typename fiber_scheduling_algorithm,
-          std::size_t fiber_task_channel_size>
+          std::size_t fiber_group_id>
 void FiberThreads<fiber_scheduling_algorithm,
-                  fiber_task_channel_size>::notify_stop() {
+                  fiber_group_id>::notify_stop() {
   std::unique_lock<std::mutex> lk(run_mtx);
   running = false;
   lk.unlock();
@@ -183,8 +181,8 @@ void FiberThreads<fiber_scheduling_algorithm,
 }
 
 template <typename fiber_scheduling_algorithm,
-          std::size_t fiber_task_channel_size>
-void FiberThreads<fiber_scheduling_algorithm, fiber_task_channel_size>::join() {
+          std::size_t fiber_group_id>
+void FiberThreads<fiber_scheduling_algorithm, fiber_group_id>::join() {
   //检查结束条件
   {
     std::unique_lock<std::mutex> lk(run_mtx);
