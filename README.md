@@ -15,6 +15,7 @@ This library works in this design:
 ## Update
 
 * Support Boost 1.70.0 now!
+* Fiber thread manager add `post` function for none fiber thread move jobs.
 
 ## How to use
 
